@@ -3,10 +3,10 @@ package golan.hello.hadoop.mng;
 import golan.hello.hadoop.utils.CmdOpts;
 import golan.hello.hadoop.utils.SSHConnection;
 import org.apache.hadoop.conf.*;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.*;
+
 import java.io.*;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -19,14 +19,15 @@ import com.jcraft.jsch.Session;
 public class MngHdfs {
 
 
-    private static final boolean useSSH    = true;
-    public  static final String OP_DELETE = "delete";
+    private static final boolean useSSH    = false;
+    public  static final String  OP_DELETE = "delete";
     public  static final String  OP_APPEND = "append";
     public  static final String  OP_WRITE  = "write";
     public  static final String  OP_READ   = "read";
     private static final String  OP_LIST   = "list";
 
     public static void main(String[] args) throws Exception {
+        if (args.length<1000) return;
         Session sshSession = null;
         FileSystem fileSystem = null;
         CmdOpts opts = new CmdOpts(args);
@@ -53,13 +54,10 @@ public class MngHdfs {
                 writeOperation(fileSystem, path);
             }
             else if (OP_READ.equals(opts.getOperation())) {
-                readOpeartion(fileSystem, path);
+                readOperation(fileSystem, path);
             }
             else if (OP_LIST.equals(opts.getOperation())) {
-                FileStatus[] status = fileSystem.listStatus(new Path("/user/hadoop/logs/logs1"));
-                for (FileStatus s: status) {
-                    System.out.println("File: " + s.getPath() + "\t\t\t Size: " + s.getLen() + " Bytes");
-                }
+                listOperation(fileSystem);
             }
 
             else {
@@ -83,7 +81,14 @@ public class MngHdfs {
 
     }
 
-    protected static void readOpeartion(FileSystem fileSystem, Path path) throws IOException {
+    private static void listOperation(FileSystem fileSystem) throws IOException {
+        FileStatus[] status = fileSystem.listStatus(new Path("/user/hadoop/logs/logs1"));
+        for (FileStatus s: status) {
+            System.out.println("File: " + s.getPath() + "\t\t\t Size: " + s.getLen() + " Bytes");
+        }
+    }
+
+    protected static void readOperation(FileSystem fileSystem, Path path) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileSystem.open(path)));
         String line;
         int numLines = 10;
@@ -112,12 +117,23 @@ public class MngHdfs {
     }
 
     protected static void deleteOperation(FileSystem fileSystem, Path path) throws IOException {
-        fileSystem.delete(path, true);
-        if (fileSystem.exists(path)) {
-            System.out.println("Failed to delete file");
-        } else {
-            System.out.println("File deleted successfully");
+        RemoteIterator<LocatedFileStatus> it = fileSystem.listFiles(path, false);
+        StringBuilder buf = new StringBuilder();
+        buf.append("DELETE~~~~~~~~~~~~~~~\n");
+        while (it.hasNext()) {
+            LocatedFileStatus fileStatus = it.next();
+            URI uri = fileSystem.getUri();
+//            fileSystem.delete(fileStatus.getPath(), false);
+            buf.append("\t").append(uri).append("\n");
         }
+        buf.append("~~~~~~~~~~~~~~DELETE");
+
+//        fileSystem.delete(path, true);
+//        if (fileSystem.exists(path)) {
+//            System.out.println("Failed to delete file");
+//        } else {
+//            System.out.println("File deleted successfully");
+//        }
     }
 
     protected static FileSystem openFileSystemConnection() throws IOException {
