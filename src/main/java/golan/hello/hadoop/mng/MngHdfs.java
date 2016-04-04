@@ -1,16 +1,24 @@
 package golan.hello.hadoop.mng;
 
+import com.jcraft.jsch.Session;
 import golan.hello.hadoop.utils.CmdOpts;
 import golan.hello.hadoop.utils.SSHConnection;
-import org.apache.hadoop.conf.*;
-import org.apache.hadoop.fs.*;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
-
-import com.jcraft.jsch.Session;
 
 /**
  * Operations to manage HDFS
@@ -30,7 +38,7 @@ public class MngHdfs {
         if (args.length<1000) return;
         Session sshSession = null;
         FileSystem fileSystem = null;
-        CmdOpts opts = new CmdOpts(args);
+        CmdOpts opts = new CmdOpts(args, Collections.emptyMap(), Collections.emptySet());
 
         try {
 
@@ -80,6 +88,7 @@ public class MngHdfs {
 
 
     }
+
 
     private static void listOperation(FileSystem fileSystem) throws IOException {
         FileStatus[] status = fileSystem.listStatus(new Path("/user/hadoop/logs/logs1"));

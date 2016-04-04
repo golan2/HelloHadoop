@@ -2,6 +2,8 @@ package golan.hello.hadoop.utils;
 
 import org.apache.commons.cli.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -22,8 +24,10 @@ public class CmdOpts {
     private final String sshUser;
     private final String sshPassword;
 
+    private final Map<String, String> arguments;
+
     @SuppressWarnings("AccessStaticViaInstance")
-    public CmdOpts(String[] args) throws ParseException {
+    public CmdOpts(String[] args, Map<String, String> params, Set<String> mandatory) throws ParseException {
         Options o = new Options();
         o.addOption(OptionBuilder.hasArgs(1).isRequired(true).create("operation"));
         o.addOption(OptionBuilder.hasArgs(1).isRequired(true).create("path"));
@@ -42,6 +46,12 @@ public class CmdOpts {
         this.sshKeyFile = line.getOptionValue("sshKeyFile", DEF_SSH_KEY_FILE);
         this.sshUser = line.getOptionValue("sshUser", DEF_SSH_USER);
         this.sshPassword = line.getOptionValue("sshPassword", DEF_SSH_PASSWORD);
+
+        arguments = new HashMap<>(params.size());
+        for (String key : params.keySet()) {
+            String value = line.getOptionValue(key, params.get(key));
+            arguments.put(key,value);
+        }
     }
 
 
@@ -58,4 +68,8 @@ public class CmdOpts {
     public String getSshUser() { return sshUser; }
 
     public String getSshPassword() { return sshPassword; }
+
+    public String get(String name) {
+        return arguments.get(name);
+    }
 }
